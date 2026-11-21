@@ -155,3 +155,11 @@ vite.config.ts.timestamp-*
 .nx/cache
 .nx/workspace-data
 .nx/migrate-runs
+
+# Banco SQLite local
+*.db
+*.sqlite
+*.sqlite3
+
+# Variáveis de ambiente
+.env
