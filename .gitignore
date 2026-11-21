@@ -163,3 +163,5 @@ vite.config.ts.timestamp-*
 
 # Variáveis de ambiente
 .env
+
+dados.db
