@@ -1,0 +1,230 @@
+openapi: 3.0.3
+info:
+  title: API de Trilhas de Estudo
+  version: 1.0.0
+  description: >
+    API para criar trilhas de estudo, adicionar recursos (artigos, vídeos e cursos)
+    a elas, marcar os recursos como concluídos e acompanhar o progresso em porcentagem.
+servers:
+  - url: http://localhost:3000
+    description: Docker Compose
+paths:
+  /health:
+    get:
+      summary: Verifica se a API está no ar
+      responses:
+        "200":
+          description: API saudável
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /metrics:
+    get:
+      summary: Métricas no formato Prometheus
+      responses:
+        "200":
+          description: Texto com a métrica http_request_duration_seconds
+          content:
+            text/plain:
+              schema:
+                type: string
+  /trilhas:
+    get:
+      summary: Lista as trilhas com o progresso de cada uma
+      responses:
+        "200":
+          description: Lista de trilhas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Trilha"
+    post:
+      summary: Cria uma trilha
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrilhaNova"
+      responses:
+        "201":
+          description: Trilha criada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trilha"
+        "400":
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erro"
+  /trilhas/{id}:
+    get:
+      summary: Consulta uma trilha com os recursos e o progresso
+      parameters:
+        - $ref: "#/components/parameters/TrilhaId"
+      responses:
+        "200":
+          description: Trilha encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trilha"
+        "404":
+          description: Trilha não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erro"
+  /trilhas/{id}/recursos:
+    post:
+      summary: Adiciona um recurso a uma trilha
+      parameters:
+        - $ref: "#/components/parameters/TrilhaId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecursoNovo"
+      responses:
+        "201":
+          description: Recurso adicionado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Recurso"
+        "400":
+          description: Dados inválidos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erro"
+        "404":
+          description: Trilha não encontrada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erro"
+  /trilhas/{id}/recursos/{recursoId}/concluir:
+    post:
+      summary: Marca um recurso como concluído
+      description: Devolve a trilha com o progresso atualizado.
+      parameters:
+        - $ref: "#/components/parameters/TrilhaId"
+        - name: recursoId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        "200":
+          description: Recurso concluído
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Trilha"
+        "404":
+          description: Recurso não encontrado nessa trilha
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erro"
+        "409":
+          description: Recurso já estava concluído
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Erro"
+components:
+  parameters:
+    TrilhaId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      example: 1
+  schemas:
+    TrilhaNova:
+      type: object
+      required: [titulo, nivel]
+      properties:
+        titulo:
+          type: string
+          example: HTML e CSS
+        nivel:
+          type: string
+          enum: [iniciante, intermediario, avancado]
+          example: iniciante
+    Trilha:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        titulo:
+          type: string
+          example: HTML e CSS
+        nivel:
+          type: string
+          enum: [iniciante, intermediario, avancado]
+        progresso:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Porcentagem de recursos concluídos
+          example: 50
+        recursos:
+          type: array
+          items:
+            $ref: "#/components/schemas/Recurso"
+    RecursoNovo:
+      type: object
+      required: [titulo, link, tipo]
+      properties:
+        titulo:
+          type: string
+          example: Guia de HTML
+        link:
+          type: string
+          format: uri
+          example: https://developer.mozilla.org/pt-BR/docs/Learn/HTML
+        tipo:
+          type: string
+          enum: [artigo, video, curso]
+          example: artigo
+    Recurso:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        trilha_id:
+          type: integer
+          example: 1
+        titulo:
+          type: string
+        link:
+          type: string
+          format: uri
+        tipo:
+          type: string
+          enum: [artigo, video, curso]
+        concluido:
+          type: boolean
+    Erro:
+      type: object
+      properties:
+        erro:
+          type: string
+          example: "nivel deve ser um destes: iniciante, intermediario, avancado"
