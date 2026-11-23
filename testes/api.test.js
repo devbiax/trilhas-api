@@ -63,4 +63,13 @@ describe("API de trilhas", () => {
     expect(resposta.status).toBe(400);
     expect(resposta.body.erro).toBeDefined();
   });
+
+  it("expõe a métrica de latência em /metrics", async () => {
+    await request(app).get("/health");
+
+    const resposta = await request(app).get("/metrics");
+
+    expect(resposta.status).toBe(200);
+    expect(resposta.text).toContain("http_request_duration_seconds");
+  });
 });
