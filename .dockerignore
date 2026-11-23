@@ -1,0 +1,6 @@
+node_modules
+coverage
+testes
+dados.db
+.env
+.git
